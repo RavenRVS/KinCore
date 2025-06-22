@@ -1,0 +1,100 @@
+from rest_framework import serializers
+from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from .models import User, UserProfile
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    """Сериализатор для регистрации пользователя"""
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'password', 'password_confirm',
+            'first_name', 'last_name', 'middle_name', 'birth_date', 'phone'
+        ]
+        extra_kwargs = {
+            'username': {'required': True},
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+            'middle_name': {'required': True},
+            'birth_date': {'required': True},
+            'phone': {'required': True},
+        }
+    
+    def validate(self, attrs):
+        """Проверка совпадения паролей"""
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError("Пароли не совпадают")
+        return attrs
+    
+    def create(self, validated_data):
+        """Создание пользователя"""
+        validated_data.pop('password_confirm')
+        user = User.objects.create_user(**validated_data)
+        
+        # Создаем профиль пользователя
+        UserProfile.objects.create(user=user)
+        
+        return user
+
+
+class UserLoginSerializer(serializers.Serializer):
+    """Сериализатор для авторизации пользователя"""
+    login = serializers.CharField(help_text="Email или номер телефона")
+    password = serializers.CharField(write_only=True)
+    
+    def validate(self, attrs):
+        login = attrs.get('login')
+        password = attrs.get('password')
+        
+        if login and password:
+            # Пытаемся найти пользователя по email или телефону
+            try:
+                if '@' in login:
+                    user = User.objects.get(email=login)
+                else:
+                    user = User.objects.get(phone=login)
+            except User.DoesNotExist:
+                raise serializers.ValidationError('Пользователь не найден')
+            
+            # Проверяем пароль
+            user = authenticate(username=user.username, password=password)
+            if not user:
+                raise serializers.ValidationError('Неверный пароль')
+            
+            attrs['user'] = user
+        else:
+            raise serializers.ValidationError('Необходимо указать логин и пароль')
+        
+        return attrs
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор для отображения данных пользователя"""
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 
+            'middle_name', 'birth_date', 'phone', 'full_name',
+            'avatar', 'bio', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Сериализатор для профиля пользователя"""
+    user = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at', 'updated_at'] 
