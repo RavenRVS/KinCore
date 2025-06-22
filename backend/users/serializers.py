@@ -97,4 +97,31 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = '__all__'
-        read_only_fields = ['user', 'created_at', 'updated_at'] 
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    """Сериализатор для обновления данных пользователя"""
+    avatar = serializers.ImageField(required=False, allow_null=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'middle_name', 'birth_date', 
+            'phone', 'email', 'avatar', 'bio'
+        ]
+        read_only_fields = ['id', 'username', 'created_at']
+    
+    def validate_email(self, value):
+        """Проверяем уникальность email"""
+        user = self.context['request'].user
+        if User.objects.exclude(id=user.id).filter(email=value).exists():
+            raise serializers.ValidationError("Пользователь с таким email уже существует")
+        return value
+    
+    def validate_phone(self, value):
+        """Проверяем уникальность телефона"""
+        user = self.context['request'].user
+        if User.objects.exclude(id=user.id).filter(phone=value).exists():
+            raise serializers.ValidationError("Пользователь с таким телефоном уже существует")
+        return value 

@@ -9,7 +9,8 @@ from .serializers import (
     UserRegistrationSerializer, 
     UserLoginSerializer, 
     UserSerializer,
-    UserProfileSerializer
+    UserProfileSerializer,
+    UserProfileUpdateSerializer
 )
 from .models import User, UserProfile
 
@@ -84,6 +85,27 @@ def current_user(request):
     """Получение данных текущего пользователя"""
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    """Обновление профиля пользователя"""
+    serializer = UserProfileUpdateSerializer(
+        request.user, 
+        data=request.data, 
+        partial=True,
+        context={'request': request}
+    )
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'message': 'Профиль успешно обновлен',
+            'user': UserSerializer(request.user).data
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
