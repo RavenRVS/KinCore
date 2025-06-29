@@ -315,13 +315,28 @@ body {
   text-decoration: underline;
 }
 
-.main-header {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  padding: 16px 32px;
+.header-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  justify-content: center;
+}
+
+.main-header {
+  background: #F2F3F5;
+  border-bottom: 2px solid #D1D3D6;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10), 0 1.5px 0 #E6E7EA;
+  padding: 10px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 42px;
+  z-index: 10;
+  position: relative;
 }
 
 .user-menu-wrapper {
@@ -627,4 +642,103 @@ body {
     height: 36px;
     font-size: 14px;
   }
+}
+
+.sidebar-link {
+  font-weight: 400;
+  font-size: 16px;
+  color: #333333;
+  display: block;
+  padding: 8px 16px 8px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s, font-weight 0.2s;
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.sidebar-submenu .sidebar-link {
+  font-size: 14px;
+  color: #333333;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 240px;
+  background: #F6F7F9;
+  border-right: 2px solid #E6E7EA;
+  padding: 24px 0 0 0;
+  min-height: 100vh;
+  z-index: 5;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.main-content {
+  flex: 1 1 auto;
+  padding: 32px;
+  min-width: 0;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.main-content.assets-page {
+  padding-top: 16px;
+}
+
+.sidebar nav ul,
+.sidebar-submenu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-link::before,
+.sidebar-link::after,
+.sidebar-submenu::before,
+.sidebar-submenu::after,
+.sidebar nav ul li::before,
+.sidebar nav ul li::after {
+  display: none !important;
+  content: none !important;
+}
+
+.sidebar-link--toggle span:first-child {
+  margin-right: 8px;
+}
+
+.sidebar-link.active {
+  font-weight: 700;
+}
+
+.sidebar-link:hover {
+  background: rgba(30,144,255,0.15);
+  color: #333333;
+}
+
+.sidebar-link--toggle .sidebar-link__arrow {
+  font-size: 10px;
+  margin-left: 3px;
+  position: relative;
+  top: -1.5px;
+  vertical-align: middle;
+}
+
+.main-content.assets-page h2 {
+  margin-top: 16px;
 }

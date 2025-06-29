@@ -132,3 +132,119 @@ npm start
 ## Контакты
 
 По вопросам разработки обращайтесь: privacy@kincore.ru 
+
+## Финансовый блок
+
+Финансовый модуль KinCore позволяет вести учет активов, пассивов, доходов, расходов, фондов, а также планировать финансовые цели и бюджет. Поддерживается история изменений, гибкая система ролей, иерархия категорий, учет валют и курсов, а также разграничение личных и семейных сущностей.
+
+### Основные сущности:
+- **Asset (Актив)**: денежные, материальные, бизнес-активы и др. с историей стоимости, ROI, распределением долей.
+- **Liability (Пассив/Обязательство)**: кредиты, займы, с расчетом задолженности, графиком платежей, привязкой расходов.
+- **Fund (Фонд)**: отдельная сущность для целей накопления, учитывается как денежный актив.
+- **Income/Expense (Доход/Расход)**: учет, категории, периодичность, привязка к активам/пассивам, обязательность.
+- **Category (Категория)**: иерархия, индивидуальные и семейные, для активов, доходов, расходов.
+- **Currency (Валюта)** и **CurrencyRate (Курс)**: пользовательские валюты, история курсов.
+- **FinanceLog (История изменений)**: логирование всех операций и изменений.
+- **FinancialGoal (Финансовая цель)** и **BudgetPlan (Бюджет)**: постановка целей, планирование, напоминания.
+- **Family, Role, FamilyMembership**: учет семей/кругов, ролей, прав доступа.
+- **SubscriptionPlan (План подписки)**: структура для будущей монетизации.
+
+### ER-диаграмма финансового блока
+
+```mermaid
+erDiagram
+    User ||--o{ UserProfile : has
+    User ||--o{ FamilyMembership : has
+    Family ||--o{ FamilyMembership : has
+    FamilyMembership }o--|| Role : has
+    User ||--o{ AssetShare : owns
+    Family ||--o{ AssetShare : owns
+    AssetType ||--o{ Asset : type
+    Category ||--o{ Asset : category
+    Category ||--o{ Income : category
+    Category ||--o{ Expense : category
+    Asset ||--o{ AssetValueHistory : has
+    Asset ||--o{ Income : has
+    Asset ||--o{ Expense : has
+    Asset ||--o{ AssetShare : has
+    Fund ||--o{ Asset : is
+    LiabilityType ||--o{ Liability : type
+    Liability ||--o{ LiabilityPayment : has
+    Liability ||--o{ Expense : has
+    Income ||--o{ Currency : in
+    Expense ||--o{ Currency : in
+    Asset ||--o{ Currency : in
+    Liability ||--o{ Currency : in
+    Fund ||--o{ Currency : in
+    Currency ||--o{ CurrencyRate : has
+    FinanceLog ||--o{ User : by
+    FinanceLog ||--o{ Asset : on
+    FinanceLog ||--o{ Liability : on
+    FinanceLog ||--o{ Fund : on
+    FinanceLog ||--o{ Income : on
+    FinanceLog ||--o{ Expense : on
+    FinanceLog ||--o{ Category : on
+    FinanceLog ||--o{ AssetShare : on
+    FinanceLog ||--o{ Family : on
+    FinancialGoal ||--o{ User : by
+    FinancialGoal ||--o{ Family : by
+    BudgetPlan ||--o{ User : by
+    BudgetPlan ||--o{ Family : by
+    SubscriptionPlan ||--o{ UserSubscription : has
+    User ||--o{ UserSubscription : has
+    User ||--o{ FinanceLog : by
+    Asset ||--o{ is_family : has
+    Liability ||--o{ is_family : has
+    Fund ||--o{ is_family : has
+    Income ||--o{ is_family : has
+    Expense ||--o{ is_family : has
+    Category ||--o{ is_family : has
+    AssetShare ||--o{ share_history : has
+    AssetShare ||--o{ valid_from : has
+    AssetShare ||--o{ valid_to : has
+    Asset ||--o{ Fund : is
+    FamilyMembership ||--o{ status : has
+    FamilyMembership ||--o{ role : has
+    Asset ||--o{ owner : has
+    Liability ||--o{ owner : has
+    Fund ||--o{ owner : has
+    Income ||--o{ owner : has
+    Expense ||--o{ owner : has
+    Category ||--o{ owner : has
+    Asset ||--o{ last_valuation_date : has
+    Asset ||--o{ purchase_value : has
+    Asset ||--o{ purchase_currency : has
+    Asset ||--o{ current_value : has
+    Asset ||--o{ current_currency : has
+    AssetValueHistory ||--o{ date : has
+    AssetValueHistory ||--o{ value : has
+    AssetValueHistory ||--o{ currency : has
+    Liability ||--o{ initial_amount : has
+    Liability ||--o{ open_date : has
+    Liability ||--o{ close_date : has
+    Liability ||--o{ interest_rate : has
+    Liability ||--o{ payment_type : has
+    Liability ||--o{ payment_date : has
+    Liability ||--o{ current_debt : has
+    LiabilityPayment ||--o{ amount : has
+    LiabilityPayment ||--o{ date : has
+    LiabilityPayment ||--o{ principal : has
+    LiabilityPayment ||--o{ interest : has
+    Income ||--o{ amount : has
+    Income ||--o{ date : has
+    Income ||--o{ type : has
+    Income ||--o{ periodicity : has
+    Income ||--o{ end_date : has
+    Expense ||--o{ amount : has
+    Expense ||--o{ date : has
+    Expense ||--o{ type : has
+    Expense ||--o{ is_mandatory : has
+    FinancialGoal ||--o{ target_amount : has
+    FinancialGoal ||--o{ target_date : has
+    BudgetPlan ||--o{ period : has
+    BudgetPlan ||--o{ planned_income : has
+    BudgetPlan ||--o{ planned_expense : has
+    UserSubscription ||--o{ plan : has
+    UserSubscription ||--o{ start_date : has
+    UserSubscription ||--o{ end_date : has
+``` 

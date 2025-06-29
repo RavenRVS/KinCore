@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     # Local apps
     'users',
     'common',
+    'finance',
+    'nucfamily',
+    'famcircle',
 ]
 
 MIDDLEWARE = [

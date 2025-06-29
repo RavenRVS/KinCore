@@ -1,42 +1,47 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserProfile
+from django.contrib.auth.admin import UserAdmin
+from .models import User, UserProfile, Family, FamilyMembership, UserDataVisibility
 
 
-class UserProfileInline(admin.StackedInline):
-    model = UserProfile
-    can_delete = False
-    verbose_name_plural = 'Профиль'
-
-
-class UserAdmin(BaseUserAdmin):
-    inlines = (UserProfileInline,)
-    list_display = ('email', 'username', 'first_name', 'last_name', 'phone', 'is_staff', 'is_active')
-    list_filter = ('is_staff', 'is_active', 'created_at')
-    search_fields = ('email', 'username', 'first_name', 'last_name', 'phone')
-    ordering = ('-created_at',)
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    list_display = ['email', 'first_name', 'last_name', 'phone', 'is_active', 'date_joined']
+    list_filter = ['is_active', 'is_staff', 'date_joined']
+    search_fields = ['email', 'first_name', 'last_name', 'phone']
+    ordering = ['-date_joined']
     
-    fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Личная информация', {'fields': ('username', 'first_name', 'last_name', 'middle_name', 'birth_date', 'phone', 'avatar', 'bio')}),
-        ('Разрешения', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Важные даты', {'fields': ('last_login', 'date_joined')}),
+    fieldsets = UserAdmin.fieldsets + (
+        ('Дополнительная информация', {'fields': ('phone', 'middle_name', 'birth_date', 'avatar', 'bio')}),
     )
-    
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2', 'first_name', 'last_name', 'middle_name', 'birth_date', 'phone'),
-        }),
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ('Дополнительная информация', {'fields': ('phone', 'middle_name', 'birth_date')}),
     )
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'company', 'position', 'notifications_enabled', 'language')
-    list_filter = ('notifications_enabled', 'language', 'created_at')
-    search_fields = ('user__email', 'user__first_name', 'user__last_name', 'company', 'position')
-    ordering = ('-created_at',)
+    list_display = ['user', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at']
+    search_fields = ['user__email', 'user__first_name', 'user__last_name']
 
 
-admin.site.register(User, UserAdmin)
+@admin.register(Family)
+class FamilyAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['name', 'description']
+
+
+@admin.register(FamilyMembership)
+class FamilyMembershipAdmin(admin.ModelAdmin):
+    list_display = ['user', 'family', 'status', 'joined_at']
+    list_filter = ['status', 'joined_at', 'left_at']
+    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'family__name']
+    readonly_fields = ['joined_at', 'left_at']
+
+
+@admin.register(UserDataVisibility)
+class UserDataVisibilityAdmin(admin.ModelAdmin):
+    list_display = ['user', 'email_visibility', 'phone_visibility', 'first_name_visibility', 'last_name_visibility']
+    list_filter = ['email_visibility', 'phone_visibility', 'first_name_visibility', 'last_name_visibility']
+    search_fields = ['user__email', 'user__first_name', 'user__last_name']

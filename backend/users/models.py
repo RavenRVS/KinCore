@@ -76,3 +76,122 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"Профиль {self.user.get_full_name()}"
+
+
+class UserDataVisibility(models.Model):
+    """
+    Управление видимостью данных пользователя по уровням доступа
+    """
+    VISIBILITY_CHOICES = [
+        ('personal', 'Личное'),
+        ('family', 'Семья'),
+        ('circle', 'Круг'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='data_visibility')
+    
+    # Видимость основных полей пользователя
+    first_name_visibility = models.CharField('Видимость имени', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    last_name_visibility = models.CharField('Видимость фамилии', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    middle_name_visibility = models.CharField('Видимость отчества', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    birth_date_visibility = models.CharField('Видимость даты рождения', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    phone_visibility = models.CharField('Видимость телефона', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    email_visibility = models.CharField('Видимость email', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    avatar_visibility = models.CharField('Видимость аватара', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    bio_visibility = models.CharField('Видимость биографии', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    
+    # Видимость полей профиля
+    address_visibility = models.CharField('Видимость адреса', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    company_visibility = models.CharField('Видимость компании', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    position_visibility = models.CharField('Видимость должности', max_length=16, choices=VISIBILITY_CHOICES, default='personal')
+    
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Дата обновления', auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Видимость данных пользователя'
+        verbose_name_plural = 'Видимость данных пользователей'
+        db_table = 'user_data_visibility'
+    
+    def __str__(self):
+        return f"Видимость данных {self.user.get_full_name()}"
+
+
+class Family(models.Model):
+    """
+    Семья/круг пользователей
+    """
+    name = models.CharField('Название семьи/круга', max_length=150)
+    description = models.TextField('Описание', blank=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Дата обновления', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Семья/Круг'
+        verbose_name_plural = 'Семьи/Круги'
+        db_table = 'families'
+
+    def __str__(self):
+        return self.name
+
+
+class FamilyMembership(models.Model):
+    """
+    Членство пользователя в семье/круге с ролью и статусом
+    """
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='memberships')
+    family = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='members')
+    status = models.CharField('Статус', max_length=30, default='active')
+    joined_at = models.DateTimeField('Дата вступления', auto_now_add=True)
+    left_at = models.DateTimeField('Дата выхода', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Член семьи/круга'
+        verbose_name_plural = 'Члены семьи/круга'
+        db_table = 'family_memberships'
+        unique_together = ('user', 'family')
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} в {self.family.name}"
+
+
+class SubscriptionPlan(models.Model):
+    """
+    План подписки (структура для будущей монетизации)
+    """
+    name = models.CharField('Название плана', max_length=100, unique=True)
+    description = models.TextField('Описание', blank=True)
+    features = models.JSONField('Функционал', default=dict, blank=True)
+    is_active = models.BooleanField('Активен', default=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Дата обновления', auto_now=True)
+
+    class Meta:
+        verbose_name = 'План подписки'
+        verbose_name_plural = 'Планы подписки'
+        db_table = 'subscription_plans'
+
+    def __str__(self):
+        return self.name
+
+
+class UserSubscription(models.Model):
+    """
+    Подписка пользователя на платный функционал
+    """
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='subscriptions')
+    plan = models.ForeignKey('SubscriptionPlan', on_delete=models.CASCADE, related_name='user_subscriptions')
+    start_date = models.DateField('Дата начала')
+    end_date = models.DateField('Дата окончания', null=True, blank=True)
+    is_active = models.BooleanField('Активна', default=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Дата обновления', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Подписка пользователя'
+        verbose_name_plural = 'Подписки пользователей'
+        db_table = 'user_subscriptions'
+        unique_together = ('user', 'plan', 'start_date')
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} — {self.plan.name} ({self.start_date})"

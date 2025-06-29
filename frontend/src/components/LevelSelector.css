@@ -1,0 +1,196 @@
+.level-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.level-selector-button {
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 320px;
+  height: 42px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.level-selector-button:hover {
+  border-color: #1E90FF;
+  box-shadow: 0 4px 12px rgba(30, 144, 255, 0.2);
+}
+
+.level-selector-button:focus {
+  outline: none;
+  border-color: #1E90FF;
+  box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+}
+
+.level-selector-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.level-text {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.level-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.level-title {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.level-arrow {
+  font-size: 16px;
+  color: #666;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+  align-self: center;
+  position: absolute;
+  right: 16px;
+}
+
+.level-arrow.open {
+  transform: rotate(180deg);
+}
+
+.level-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.level-option {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.level-option:first-child {
+  border-radius: 10px 10px 0 0;
+}
+
+.level-option:last-child {
+  border-radius: 0 0 10px 10px;
+}
+
+.level-option:hover {
+  background-color: #f8f9fa;
+}
+
+.level-option.active {
+  background-color: #e3f2fd;
+  color: #1E90FF;
+}
+
+.level-option.active .level-option-name {
+  color: #1E90FF;
+  font-weight: 600;
+}
+
+.level-option-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-option-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.level-option-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.level-option-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.level-option-title {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Скроллбар для dropdown */
+.level-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.level-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.level-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.level-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+} 

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User, UserProfile
+from .models import User, UserProfile, Family, FamilyMembership, UserDataVisibility
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -38,6 +38,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         # Создаем профиль пользователя
         UserProfile.objects.create(user=user)
+        
+        # Создаем настройки видимости данных по умолчанию
+        UserDataVisibility.objects.create(user=user)
         
         return user
 
@@ -124,4 +127,39 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if User.objects.exclude(id=user.id).filter(phone=value).exists():
             raise serializers.ValidationError("Пользователь с таким телефоном уже существует")
-        return value 
+        return value
+
+
+class UserDataVisibilitySerializer(serializers.ModelSerializer):
+    """Сериализатор для управления видимостью данных пользователя"""
+    
+    class Meta:
+        model = UserDataVisibility
+        fields = [
+            'first_name_visibility', 'last_name_visibility', 'middle_name_visibility',
+            'birth_date_visibility', 'phone_visibility', 'email_visibility',
+            'avatar_visibility', 'bio_visibility', 'address_visibility',
+            'company_visibility', 'position_visibility'
+        ]
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+
+class FamilySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Family
+        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class FamilyMembershipSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    family = FamilySerializer(read_only=True)
+    family_id = serializers.PrimaryKeyRelatedField(queryset=Family.objects.all(), source='family', write_only=True)
+
+    class Meta:
+        model = FamilyMembership
+        fields = [
+            'id', 'user', 'family', 'status', 'joined_at', 'left_at',
+            'family_id'
+        ]
+        read_only_fields = ['id', 'user', 'joined_at', 'left_at'] 

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,9 +10,12 @@ from .serializers import (
     UserLoginSerializer, 
     UserSerializer,
     UserProfileSerializer,
-    UserProfileUpdateSerializer
+    UserProfileUpdateSerializer,
+    FamilySerializer,
+    FamilyMembershipSerializer,
+    UserDataVisibilitySerializer
 )
-from .models import User, UserProfile
+from .models import User, UserProfile, Family, FamilyMembership, UserDataVisibility
 
 
 @api_view(['POST'])
@@ -117,3 +120,32 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         """Получаем профиль текущего пользователя"""
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
+
+
+class UserDataVisibilityView(generics.RetrieveUpdateAPIView):
+    """API для управления видимостью данных пользователя"""
+    serializer_class = UserDataVisibilitySerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        """Получаем настройки видимости текущего пользователя"""
+        visibility, created = UserDataVisibility.objects.get_or_create(user=self.request.user)
+        return visibility
+
+
+class FamilyViewSet(viewsets.ModelViewSet):
+    queryset = Family.objects.all()
+    serializer_class = FamilySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class FamilyMembershipViewSet(viewsets.ModelViewSet):
+    serializer_class = FamilyMembershipSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Фильтруем членства по текущему пользователю"""
+        return FamilyMembership.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
