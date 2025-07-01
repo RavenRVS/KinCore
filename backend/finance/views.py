@@ -9,7 +9,7 @@ from .serializers import (
     AssetValueHistorySerializer, AssetShareSerializer, FundSerializer, LiabilityTypeSerializer, LiabilitySerializer,
     LiabilityPaymentSerializer, IncomeSerializer, ExpenseSerializer, FinanceLogSerializer, FinancialGoalSerializer, BudgetPlanSerializer
 )
-from users.models import FamilyMembership
+from nucfamily.models import FamilyMembership
 from django.db import models
 from rest_framework import serializers
 import json

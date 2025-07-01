@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User, UserProfile, Family, FamilyMembership, UserDataVisibility
+from .models import User, UserProfile, UserDataVisibility
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -141,25 +141,4 @@ class UserDataVisibilitySerializer(serializers.ModelSerializer):
             'avatar_visibility', 'bio_visibility', 'address_visibility',
             'company_visibility', 'position_visibility'
         ]
-        read_only_fields = ['user', 'created_at', 'updated_at']
-
-
-class FamilySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Family
-        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-
-class FamilyMembershipSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    family = FamilySerializer(read_only=True)
-    family_id = serializers.PrimaryKeyRelatedField(queryset=Family.objects.all(), source='family', write_only=True)
-
-    class Meta:
-        model = FamilyMembership
-        fields = [
-            'id', 'user', 'family', 'status', 'joined_at', 'left_at',
-            'family_id'
-        ]
-        read_only_fields = ['id', 'user', 'joined_at', 'left_at'] 
+        read_only_fields = ['user', 'created_at', 'updated_at'] 

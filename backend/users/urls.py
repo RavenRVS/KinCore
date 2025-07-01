@@ -5,8 +5,8 @@ from . import views
 app_name = 'users'
 
 router = DefaultRouter()
-router.register(r'families', views.FamilyViewSet, basename='family')
-router.register(r'family-memberships', views.FamilyMembershipViewSet, basename='familymembership')
+# router.register(r'families', views.FamilyViewSet, basename='family')
+# router.register(r'family-memberships', views.FamilyMembershipViewSet, basename='familymembership')
 
 urlpatterns = [
     path('register/', views.register, name='register'),

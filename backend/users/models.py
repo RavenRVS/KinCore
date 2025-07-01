@@ -117,44 +117,6 @@ class UserDataVisibility(models.Model):
         return f"Видимость данных {self.user.get_full_name()}"
 
 
-class Family(models.Model):
-    """
-    Семья/круг пользователей
-    """
-    name = models.CharField('Название семьи/круга', max_length=150)
-    description = models.TextField('Описание', blank=True)
-    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
-    updated_at = models.DateTimeField('Дата обновления', auto_now=True)
-
-    class Meta:
-        verbose_name = 'Семья/Круг'
-        verbose_name_plural = 'Семьи/Круги'
-        db_table = 'families'
-
-    def __str__(self):
-        return self.name
-
-
-class FamilyMembership(models.Model):
-    """
-    Членство пользователя в семье/круге с ролью и статусом
-    """
-    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='memberships')
-    family = models.ForeignKey('Family', on_delete=models.CASCADE, related_name='members')
-    status = models.CharField('Статус', max_length=30, default='active')
-    joined_at = models.DateTimeField('Дата вступления', auto_now_add=True)
-    left_at = models.DateTimeField('Дата выхода', null=True, blank=True)
-
-    class Meta:
-        verbose_name = 'Член семьи/круга'
-        verbose_name_plural = 'Члены семьи/круга'
-        db_table = 'family_memberships'
-        unique_together = ('user', 'family')
-
-    def __str__(self):
-        return f"{self.user.get_full_name()} в {self.family.name}"
-
-
 class SubscriptionPlan(models.Model):
     """
     План подписки (структура для будущей монетизации)

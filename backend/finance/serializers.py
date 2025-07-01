@@ -3,6 +3,7 @@ from .models import (
     Category, Currency, CurrencyRate, AssetType, Asset, AssetValueHistory, AssetShare, Fund,
     LiabilityType, Liability, LiabilityPayment, Income, Expense, FinanceLog, FinancialGoal, BudgetPlan
 )
+from datetime import date
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,6 +29,35 @@ class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Asset
         fields = '__all__'
+
+    def validate_last_valuation_date(self, value):
+        if value is not None and value > date.today():
+            raise serializers.ValidationError('Дата последней оценки не может быть в будущем (допустимо только сегодня или ранее).')
+        return value
+
+    def create(self, validated_data):
+        asset = super().create(validated_data)
+        AssetValueHistory.objects.update_or_create(
+            asset=asset,
+            date=asset.last_valuation_date,
+            defaults={
+                'value': asset.current_value,
+                'currency': asset.current_currency,
+            }
+        )
+        return asset
+
+    def update(self, instance, validated_data):
+        asset = super().update(instance, validated_data)
+        AssetValueHistory.objects.update_or_create(
+            asset=asset,
+            date=asset.last_valuation_date,
+            defaults={
+                'value': asset.current_value,
+                'currency': asset.current_currency,
+            }
+        )
+        return asset
 
 class AssetValueHistorySerializer(serializers.ModelSerializer):
     class Meta:

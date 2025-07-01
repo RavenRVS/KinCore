@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, UserProfile, Family, FamilyMembership, UserDataVisibility
+from .models import User, UserProfile, UserDataVisibility
 
 
 @admin.register(User)
@@ -23,21 +23,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'created_at', 'updated_at']
     list_filter = ['created_at', 'updated_at']
     search_fields = ['user__email', 'user__first_name', 'user__last_name']
-
-
-@admin.register(Family)
-class FamilyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['name', 'description']
-
-
-@admin.register(FamilyMembership)
-class FamilyMembershipAdmin(admin.ModelAdmin):
-    list_display = ['user', 'family', 'status', 'joined_at']
-    list_filter = ['status', 'joined_at', 'left_at']
-    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'family__name']
-    readonly_fields = ['joined_at', 'left_at']
 
 
 @admin.register(UserDataVisibility)

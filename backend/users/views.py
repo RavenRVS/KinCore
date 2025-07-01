@@ -11,11 +11,9 @@ from .serializers import (
     UserSerializer,
     UserProfileSerializer,
     UserProfileUpdateSerializer,
-    FamilySerializer,
-    FamilyMembershipSerializer,
     UserDataVisibilitySerializer
 )
-from .models import User, UserProfile, Family, FamilyMembership, UserDataVisibility
+from .models import User, UserProfile, UserDataVisibility
 
 
 @api_view(['POST'])
@@ -131,21 +129,3 @@ class UserDataVisibilityView(generics.RetrieveUpdateAPIView):
         """Получаем настройки видимости текущего пользователя"""
         visibility, created = UserDataVisibility.objects.get_or_create(user=self.request.user)
         return visibility
-
-
-class FamilyViewSet(viewsets.ModelViewSet):
-    queryset = Family.objects.all()
-    serializer_class = FamilySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class FamilyMembershipViewSet(viewsets.ModelViewSet):
-    serializer_class = FamilyMembershipSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        """Фильтруем членства по текущему пользователю"""
-        return FamilyMembership.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)

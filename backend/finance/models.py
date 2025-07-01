@@ -1,5 +1,6 @@
 from django.db import models
-from users.models import User, Family
+from users.models import User
+from nucfamily.models import NuclearFamily
 from decimal import Decimal
 from django.db.models import Sum
 from django.utils import timezone
@@ -11,7 +12,7 @@ class Category(models.Model):
     name = models.CharField('Название', max_length=100)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='children')
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='categories')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='categories')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='categories')
     is_family = models.BooleanField('Семейная категория', default=False)
     type = models.CharField('Тип', max_length=20, choices=[('asset', 'Актив'), ('income', 'Доход'), ('expense', 'Расход')])
     created_at = models.DateTimeField(auto_now_add=True)
@@ -67,7 +68,7 @@ class AssetType(models.Model):
     """
     name = models.CharField('Название типа', max_length=50, unique=True)
     is_base = models.BooleanField('Базовый тип', default=False)
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='asset_types')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='asset_types')
 
     class Meta:
         verbose_name = 'Тип актива'
@@ -88,9 +89,9 @@ class Asset(models.Model):
     purchase_currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name='assets_purchase')
     current_value = models.DecimalField('Текущая стоимость', max_digits=20, decimal_places=2)
     current_currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name='assets_current')
-    last_valuation_date = models.DateField('Дата последней оценки', auto_now=True)
+    last_valuation_date = models.DateField('Дата последней оценки', null=True, blank=True)
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='assets')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='assets')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='assets')
     is_family = models.BooleanField('Семейный актив', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -145,7 +146,7 @@ class AssetShare(models.Model):
     """
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='shares')
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='asset_shares')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.CASCADE, related_name='asset_shares')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.CASCADE, related_name='asset_shares')
     share = models.DecimalField('Доля', max_digits=7, decimal_places=4)  # 0.0001 - 100.0000
     valid_from = models.DateField('Действует с')
     valid_to = models.DateField('Действует по', null=True, blank=True)
@@ -168,7 +169,7 @@ class Fund(models.Model):
     current_value = models.DecimalField('Текущая сумма', max_digits=20, decimal_places=2)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='funds')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='funds')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='funds')
     is_family = models.BooleanField('Семейный фонд', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -213,7 +214,7 @@ class LiabilityType(models.Model):
     """
     name = models.CharField('Название типа', max_length=50, unique=True)
     is_base = models.BooleanField('Базовый тип', default=False)
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='liability_types')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='liability_types')
 
     class Meta:
         verbose_name = 'Тип пассива'
@@ -238,7 +239,7 @@ class Liability(models.Model):
     payment_date = models.DateField('Дата платежа', null=True, blank=True)
     current_debt = models.DecimalField('Задолженность на сегодня', max_digits=20, decimal_places=2)
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='liabilities')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='liabilities')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='liabilities')
     is_family = models.BooleanField('Семейный пассив', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -252,7 +253,7 @@ class Liability(models.Model):
         return self.name
 
     def get_total_payments(self):
-        """Получить общую сумму внесенных платежей"""
+        """Получить общую сумму платежей по пассиву"""
         return self.payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
     def get_total_principal_paid(self):
@@ -260,16 +261,16 @@ class Liability(models.Model):
         return self.payments.aggregate(total=Sum('principal'))['total'] or Decimal('0.00')
 
     def get_total_interest_paid(self):
-        """Получить общую сумму уплаченных процентов"""
+        """Получить общую сумму выплаченных процентов"""
         return self.payments.aggregate(total=Sum('interest'))['total'] or Decimal('0.00')
 
     def get_remaining_principal(self):
-        """Получить остаток основного долга"""
-        return self.initial_amount - self.current_debt
+        """Получить оставшуюся сумму основного долга"""
+        return max(Decimal('0.00'), self.initial_amount - self.get_total_principal_paid())
 
     def has_unlinked_expenses(self):
-        """Проверить, есть ли не привязанные к пассиву расходы"""
-        return not self.expenses.exists()
+        """Проверить наличие расходов, не привязанных к платежам по пассиву"""
+        return self.expenses.filter(liability_payment__isnull=True).exists()
 
 class LiabilityPayment(models.Model):
     """
@@ -280,6 +281,8 @@ class LiabilityPayment(models.Model):
     date = models.DateField('Дата платежа')
     principal = models.DecimalField('Погашение основного долга', max_digits=20, decimal_places=2)
     interest = models.DecimalField('Погашение процентов', max_digits=20, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Платеж по пассиву'
@@ -288,7 +291,7 @@ class LiabilityPayment(models.Model):
         unique_together = ('liability', 'date')
 
     def __str__(self):
-        return f"{self.liability.name} — {self.amount} ({self.date})"
+        return f"Платеж {self.amount} по {self.liability.name} на {self.date}"
 
 class Income(models.Model):
     """
@@ -304,7 +307,7 @@ class Income(models.Model):
     periodicity = models.CharField('Периодичность', max_length=30, blank=True)
     end_date = models.DateField('Дата окончания', null=True, blank=True)
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='incomes')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='incomes')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='incomes')
     is_family = models.BooleanField('Семейный доход', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -315,7 +318,7 @@ class Income(models.Model):
         db_table = 'incomes'
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.amount} {self.currency.code})"
 
 class Expense(models.Model):
     """
@@ -330,7 +333,7 @@ class Expense(models.Model):
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
     type = models.CharField('Тип', max_length=20, choices=[('mandatory', 'Обязательный'), ('optional', 'Необязательный')])
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
     is_family = models.BooleanField('Семейный расход', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -341,7 +344,7 @@ class Expense(models.Model):
         db_table = 'expenses'
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.amount} {self.currency.code})"
 
 class FinanceLog(models.Model):
     """
@@ -354,6 +357,8 @@ class FinanceLog(models.Model):
     date = models.DateTimeField('Дата операции', auto_now_add=True)
     data_before = models.JSONField('Данные до', null=True, blank=True)
     data_after = models.JSONField('Данные после', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Лог финансового блока'
@@ -361,7 +366,7 @@ class FinanceLog(models.Model):
         db_table = 'finance_logs'
 
     def __str__(self):
-        return f"{self.entity_type} {self.entity_id} — {self.action}"
+        return f"[{self.date.strftime('%Y-%m-%d %H:%M')}] {self.action} {self.entity_type} {self.entity_id}"
 
 class FinancialGoal(models.Model):
     """
@@ -371,7 +376,7 @@ class FinancialGoal(models.Model):
     target_amount = models.DecimalField('Целевая сумма', max_digits=20, decimal_places=2)
     target_date = models.DateField('Целевая дата')
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='financial_goals')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='financial_goals')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='financial_goals')
     is_family = models.BooleanField('Семейная цель', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -392,7 +397,7 @@ class BudgetPlan(models.Model):
     planned_income = models.DecimalField('Планируемый доход', max_digits=20, decimal_places=2)
     planned_expense = models.DecimalField('Планируемый расход', max_digits=20, decimal_places=2)
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='budget_plans')
-    family = models.ForeignKey(Family, null=True, blank=True, on_delete=models.SET_NULL, related_name='budget_plans')
+    family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='budget_plans')
     is_family = models.BooleanField('Семейный бюджет', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -403,4 +408,4 @@ class BudgetPlan(models.Model):
         db_table = 'budget_plans'
 
     def __str__(self):
-        return f"{self.period} — {self.owner or self.family}"
+        return f"{self.period} бюджет"
