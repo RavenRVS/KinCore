@@ -53,6 +53,12 @@ const Sidebar: React.FC = () => {
                     <li>
                       <Link to="/finance/assets" className={`sidebar-link${location.pathname === '/finance/assets' ? ' active' : ''}`}>Активы</Link>
                     </li>
+                    <li>
+                      <Link to="/finance/liabilities" className={`sidebar-link${location.pathname === '/finance/liabilities' ? ' active' : ''}`}>Пассивы</Link>
+                    </li>
+                    <li>
+                      <Link to="/finance/expenses" className={`sidebar-link${location.pathname === '/finance/expenses' ? ' active' : ''}`}>Расходы</Link>
+                    </li>
                   </ul>
                 )}
               </div>

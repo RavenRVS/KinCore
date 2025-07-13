@@ -9,6 +9,8 @@ import FamilyPage from './pages/FamilyPage';
 import CirclePage from './pages/CirclePage';
 import FinancePage from './pages/FinancePage';
 import AssetsPage from './pages/AssetsPage';
+import ExpensesPage from './pages/ExpensesPage'; // Added import for ExpensesPage
+import LiabilitiesPage from './pages/LiabilitiesPage';
 import { useAuth } from './hooks/useAuth';
 import { LevelProvider } from './contexts/LevelContext';
 import Sidebar from './components/Sidebar';
@@ -59,6 +61,14 @@ const App: React.FC = () => {
                 {/* Страница активов (только для авторизованных) */}
                 <Route path="/finance/assets" element={
                   isAuthenticated ? <AssetsPage /> : <Navigate to="/" replace />
+                } />
+                {/* Страница пассивов (только для авторизованных) */}
+                <Route path="/finance/liabilities" element={
+                  isAuthenticated ? <LiabilitiesPage /> : <Navigate to="/" replace />
+                } />
+                {/* Страница расходов (только для авторизованных) */}
+                <Route path="/finance/expenses" element={
+                  isAuthenticated ? <ExpensesPage /> : <Navigate to="/" replace />
                 } />
                 {/* Редирект на стартовую по умолчанию */}
                 <Route path="*" element={<Navigate to="/" replace />} />

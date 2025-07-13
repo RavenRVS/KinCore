@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Level, LevelType, FamilyLevel, CircleLevel } from '../types/levels';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { Level } from '../types/levels';
 import { useAuth } from '../hooks/useAuth';
 
 interface LevelContextType {
@@ -37,7 +37,7 @@ export const LevelProvider: React.FC<LevelProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Загрузка доступных уровней
-  const loadLevels = async () => {
+  const loadLevels = useCallback(async () => {
     if (!isAuthenticated || !user) return;
 
     setIsLoading(true);
@@ -114,7 +114,7 @@ export const LevelProvider: React.FC<LevelProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, user, currentLevel.type, currentLevel.id]);
 
   // Обновление уровней
   const refreshLevels = async () => {
@@ -126,7 +126,7 @@ export const LevelProvider: React.FC<LevelProviderProps> = ({ children }) => {
     if (isAuthenticated && user) {
       loadLevels();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, loadLevels]);
 
   // Обновляем заголовок личного уровня при изменении пользователя
   useEffect(() => {
@@ -136,7 +136,7 @@ export const LevelProvider: React.FC<LevelProviderProps> = ({ children }) => {
         title: `${user.first_name} ${user.last_name}`
       }));
     }
-  }, [user]);
+  }, [user, currentLevel.type]);
 
   const value: LevelContextType = {
     currentLevel,

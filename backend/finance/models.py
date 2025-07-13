@@ -89,7 +89,7 @@ class Asset(models.Model):
     purchase_currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name='assets_purchase')
     current_value = models.DecimalField('Текущая стоимость', max_digits=20, decimal_places=2)
     current_currency = models.ForeignKey(Currency, on_delete=models.PROTECT, related_name='assets_current')
-    last_valuation_date = models.DateField('Дата последней оценки', null=True, blank=True)
+    last_valuation_date = models.DateField('Дата последней оценки', auto_now=True, null=True, blank=True)
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='assets')
     family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='assets')
     is_family = models.BooleanField('Семейный актив', default=False)
@@ -332,6 +332,12 @@ class Expense(models.Model):
     liability = models.ForeignKey(Liability, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
     type = models.CharField('Тип', max_length=20, choices=[('mandatory', 'Обязательный'), ('optional', 'Необязательный')])
+    recurrence_type = models.CharField(
+        max_length=20,
+        choices=[('none', 'Разовый'), ('monthly', 'Ежемесячно'), ('weekly', 'Еженедельно')],
+        default='none',
+        help_text='Тип повторения расхода'
+    )
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
     family = models.ForeignKey(NuclearFamily, null=True, blank=True, on_delete=models.SET_NULL, related_name='expenses')
     is_family = models.BooleanField('Семейный расход', default=False)
@@ -345,6 +351,20 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.amount} {self.currency.code})"
+
+class ExpensePayment(models.Model):
+    expense = models.ForeignKey('Expense', on_delete=models.CASCADE, related_name='payments')
+    paid_date = models.DateField(auto_now_add=True, help_text='Дата оплаты')
+    amount = models.DecimalField(max_digits=20, decimal_places=2, help_text='Оплаченная сумма')
+    comment = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Оплата расхода'
+        verbose_name_plural = 'Оплаты расходов'
+        db_table = 'expense_payments'
+
+    def __str__(self):
+        return f"{self.expense.name}: {self.amount} оплачено"
 
 class FinanceLog(models.Model):
     """

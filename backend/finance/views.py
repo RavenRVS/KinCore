@@ -2,12 +2,12 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions
 from .models import (
     Category, Currency, CurrencyRate, AssetType, Asset, AssetValueHistory, AssetShare, Fund,
-    LiabilityType, Liability, LiabilityPayment, Income, Expense, FinanceLog, FinancialGoal, BudgetPlan
+    LiabilityType, Liability, LiabilityPayment, Income, Expense, FinanceLog, FinancialGoal, BudgetPlan, ExpensePayment
 )
 from .serializers import (
     CategorySerializer, CurrencySerializer, CurrencyRateSerializer, AssetTypeSerializer, AssetSerializer,
     AssetValueHistorySerializer, AssetShareSerializer, FundSerializer, LiabilityTypeSerializer, LiabilitySerializer,
-    LiabilityPaymentSerializer, IncomeSerializer, ExpenseSerializer, FinanceLogSerializer, FinancialGoalSerializer, BudgetPlanSerializer
+    LiabilityPaymentSerializer, IncomeSerializer, ExpenseSerializer, FinanceLogSerializer, FinancialGoalSerializer, BudgetPlanSerializer, ExpensePaymentSerializer
 )
 from nucfamily.models import FamilyMembership
 from django.db import models
@@ -17,6 +17,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum, Count
 from decimal import Decimal
+from rest_framework import status
 
 # Create your views here.
 
@@ -50,10 +51,10 @@ class LoggableViewSetMixin:
     """
     Миксин для автоматического логирования изменений в FinanceLog
     """
-    def log_action(self, action, instance, data_before=None, data_after=None):
+    def log_action(self, action, instance, data_before=None, data_after=None, entity_id=None):
         FinanceLog.objects.create(
             entity_type=instance.__class__.__name__,
-            entity_id=instance.pk,
+            entity_id=entity_id if entity_id is not None else instance.pk,
             action=action,
             user=self.request.user,
             data_before=data_before,
@@ -73,8 +74,9 @@ class LoggableViewSetMixin:
 
     def perform_destroy(self, instance):
         data_before = self.get_serializer(instance).data
+        entity_id = instance.pk  # Сохраняем id ДО удаления
         super().perform_destroy(instance)
-        self.log_action('delete', instance, data_before=data_before, data_after=None)
+        self.log_action('delete', instance, data_before=data_before, data_after=None, entity_id=entity_id)
 
 class CategoryViewSet(LoggableViewSetMixin, FamilyUserQuerysetMixin, viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -140,6 +142,45 @@ class ExpenseViewSet(LoggableViewSetMixin, FamilyUserQuerysetMixin, viewsets.Mod
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=['get'])
+    def payments(self, request, pk=None):
+        expense = self.get_object()
+        payments = expense.payments.all().order_by('-paid_date')
+        serializer = ExpensePaymentSerializer(payments, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def pay(self, request, pk=None):
+        expense = self.get_object()
+        paid_date = request.data.get('paid_date')
+        amount = request.data.get('amount', expense.amount)
+        comment = request.data.get('comment', '')
+        # Проверяем, есть ли уже оплата за эту дату
+        if paid_date:
+            exists = ExpensePayment.objects.filter(expense=expense, paid_date=paid_date).exists()
+            if exists:
+                return Response({'detail': 'Already paid for this date'}, status=status.HTTP_400_BAD_REQUEST)
+        payment = ExpensePayment.objects.create(
+            expense=expense,
+            paid_date=paid_date or None,
+            amount=amount,
+            comment=comment
+        )
+        return Response(ExpensePaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def unpay(self, request, pk=None):
+        expense = self.get_object()
+        paid_date = request.data.get('paid_date')
+        qs = ExpensePayment.objects.filter(expense=expense)
+        if paid_date:
+            qs = qs.filter(paid_date=paid_date)
+        deleted, _ = qs.delete()
+        if deleted:
+            return Response({'detail': 'Payment removed'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'No payment found'}, status=status.HTTP_404_NOT_FOUND)
 
 class FinanceLogViewSet(viewsets.ModelViewSet):
     queryset = FinanceLog.objects.all()

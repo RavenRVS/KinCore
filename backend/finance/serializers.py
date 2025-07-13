@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Category, Currency, CurrencyRate, AssetType, Asset, AssetValueHistory, AssetShare, Fund,
-    LiabilityType, Liability, LiabilityPayment, Income, Expense, FinanceLog, FinancialGoal, BudgetPlan
+    LiabilityType, Liability, LiabilityPayment, Income, Expense, FinanceLog, FinancialGoal, BudgetPlan, ExpensePayment
 )
 from datetime import date
 
@@ -94,7 +94,14 @@ class IncomeSerializer(serializers.ModelSerializer):
         model = Income
         fields = '__all__'
 
+class ExpensePaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExpensePayment
+        fields = '__all__'
+
 class ExpenseSerializer(serializers.ModelSerializer):
+    payments = ExpensePaymentSerializer(many=True, read_only=True)
+
     class Meta:
         model = Expense
         fields = '__all__'
